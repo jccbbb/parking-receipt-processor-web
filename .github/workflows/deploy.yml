@@ -15,74 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: TEST - Debug webhook responses
+      - name: Trigger Dokploy deploy
         run: |
-          echo "=== TEST 1: WITHOUT Cloudflare Access tokens ==="
-          echo "This should be blocked if Cloudflare Access is properly configured"
-          echo "----------------------------------------"
-
-          response=$(curl -s -w "\nHTTP_CODE:%{http_code}\n" -i \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            -d '{
-              "ref": "refs/heads/${{ github.ref_name }}",
-              "repository": {
-                "name": "${{ github.event.repository.name }}",
-                "full_name": "${{ github.event.repository.full_name }}"
-              },
-              "pusher": {
-                "name": "${{ github.actor }}"
-              },
-              "head_commit": {
-                "id": "${{ github.sha }}",
-                "message": "${{ github.event.head_commit.message }}",
-                "timestamp": "${{ github.event.head_commit.timestamp }}"
-              }
-            }' \
-            "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW" 2>&1)
-
-          echo "$response"
-          echo ""
-          echo "=== TEST 2: WITH Cloudflare Access tokens ==="
-          echo "This should be allowed"
-          echo "----------------------------------------"
-
-          response2=$(curl -L -s -w "\nHTTP_CODE:%{http_code}\n" -i \
-            -X POST \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            -d '{
-              "ref": "refs/heads/${{ github.ref_name }}",
-              "repository": {
-                "name": "${{ github.event.repository.name }}",
-                "full_name": "${{ github.event.repository.full_name }}"
-              },
-              "pusher": {
-                "name": "${{ github.actor }}"
-              },
-              "head_commit": {
-                "id": "${{ github.sha }}",
-                "message": "${{ github.event.head_commit.message }}",
-                "timestamp": "${{ github.event.head_commit.timestamp }}"
-              }
-            }' \
-            "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW" 2>&1)
-
-          echo "$response2"
-          echo ""
-          echo "=== COMPARISON ==="
-          echo "If both tests return the same response, Cloudflare Access is NOT protecting the endpoint"
-          echo "If TEST 1 returns 403/401 and TEST 2 returns 200/301, Cloudflare Access IS working"
-
-      - name: Trigger Dokploy deploy via Cloudflare Access
-        run: |
-          echo "=== ACTUAL DEPLOYMENT ==="
-          curl -L -X POST \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+          curl -X POST \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
             -d '{
@@ -101,4 +36,3 @@ jobs:
               }
             }' \
             "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW"
-          echo "Deployment triggered"
