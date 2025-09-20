@@ -1,0 +1,26 @@
+name: Deploy to Dokploy
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Dokploy via Cloudflare Access
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Dokploy deploy via Cloudflare Access
+        run: |
+          curl -i \
+            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW"
+
+      - name: Verify deployment triggered
+        run: echo "Deployment webhook triggered successfully"
