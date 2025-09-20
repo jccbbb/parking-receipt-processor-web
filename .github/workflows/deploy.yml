@@ -48,7 +48,7 @@ jobs:
           echo "This should be allowed"
           echo "----------------------------------------"
 
-          response2=$(curl -s -w "\nHTTP_CODE:%{http_code}\n" -i \
+          response2=$(curl -L -s -w "\nHTTP_CODE:%{http_code}\n" -i \
             -X POST \
             -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
             -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
