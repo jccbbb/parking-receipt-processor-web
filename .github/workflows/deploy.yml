@@ -37,8 +37,8 @@ jobs:
           }
 JSON
           )
-          BODY="${RESPONSE%$'\n'*}"
-          CODE="${RESPONSE##*$'\n'}"
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          CODE=$(echo "$RESPONSE" | tail -n 1)
           echo "HTTP_CODE: $CODE"
           echo "$BODY"
           # Fail job on non-2xx/3xx
