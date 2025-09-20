@@ -12,15 +12,8 @@ jobs:
       - name: Trigger Dokploy via Cloudflare Access (webhook-style)
         run: |
           set -euo pipefail
-          RESPONSE=$(
-            curl -sS -L -w "\n%{http_code}" \
-              -X POST \
-              -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-              -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
-              -H "Content-Type: application/json" \
-              -H "X-GitHub-Event: push" \
-              --data-binary @- \
-              "${{ secrets.DOKPLOY_WEBHOOK_URL }}" <<'JSON'
+
+          JSON_DATA=$(cat <<EOF
           {
             "ref": "refs/heads/${{ github.ref_name }}",
             "repository": {
@@ -35,11 +28,23 @@ jobs:
               "message": "${{ github.event.head_commit.message }}"
             }
           }
-JSON
+          EOF
           )
+
+          RESPONSE=$(curl -sS -L -w "\n%{http_code}" \
+            -X POST \
+            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            -d "$JSON_DATA" \
+            "${{ secrets.DOKPLOY_WEBHOOK_URL }}")
+
           BODY=$(echo "$RESPONSE" | head -n -1)
           CODE=$(echo "$RESPONSE" | tail -n 1)
+
           echo "HTTP_CODE: $CODE"
           echo "$BODY"
+
           # Fail job on non-2xx/3xx
           test "$CODE" -ge 200 -a "$CODE" -lt 400
