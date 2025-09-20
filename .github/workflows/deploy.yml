@@ -2,39 +2,44 @@ name: Deploy to Dokploy
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [ master, main ]
   workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy to Dokploy via Cloudflare Access
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Trigger Dokploy deploy
+      - name: Trigger Dokploy via Cloudflare Access (webhook-style)
         run: |
-          curl -X POST \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -H "X-GitHub-Event: push" \
-            -d '{
-              "ref": "refs/heads/${{ github.ref_name }}",
-              "repository": {
-                "name": "${{ github.event.repository.name }}",
-                "full_name": "${{ github.event.repository.full_name }}"
-              },
-              "pusher": {
-                "name": "${{ github.actor }}"
-              },
-              "head_commit": {
-                "id": "${{ github.sha }}",
-                "message": "${{ github.event.head_commit.message }}",
-                "timestamp": "${{ github.event.head_commit.timestamp }}"
-              }
-            }' \
-            "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW"
+          set -euo pipefail
+          RESPONSE=$(
+            curl -sS -L -w "\n%{http_code}" \
+              -X POST \
+              -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+              -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+              -H "Content-Type: application/json" \
+              -H "X-GitHub-Event: push" \
+              --data-binary @- \
+              "${{ secrets.DOKPLOY_WEBHOOK_URL }}" <<'JSON'
+          {
+            "ref": "refs/heads/${{ github.ref_name }}",
+            "repository": {
+              "name": "${{ github.event.repository.name }}",
+              "full_name": "${{ github.repository }}"
+            },
+            "pusher": {
+              "name": "${{ github.actor }}"
+            },
+            "head_commit": {
+              "id": "${{ github.sha }}",
+              "message": "${{ github.event.head_commit.message }}"
+            }
+          }
+JSON
+          )
+          BODY="${RESPONSE%$'\n'*}"
+          CODE="${RESPONSE##*$'\n'}"
+          echo "HTTP_CODE: $CODE"
+          echo "$BODY"
+          # Fail job on non-2xx/3xx
+          test "$CODE" -ge 200 -a "$CODE" -lt 400
