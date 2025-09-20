@@ -9,25 +9,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Dokploy via Cloudflare Access
+      - name: Trigger Dokploy webhook
         run: |
-          curl -X POST \
+          curl -i -L -X POST \
             -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
             -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
-            -d '{
-              "ref": "refs/heads/${{ github.ref_name }}",
-              "repository": {
-                "name": "${{ github.event.repository.name }}",
-                "full_name": "${{ github.repository }}"
-              },
-              "pusher": {
-                "name": "${{ github.actor }}"
-              },
-              "head_commit": {
-                "id": "${{ github.sha }}",
-                "message": "${{ github.event.head_commit.message }}"
-              }
-            }' \
+            --data "{
+              \"ref\": \"${{ github.ref }}\",
+              \"repository\": { \"name\": \"${{ github.event.repository.name }}\", \"full_name\": \"${{ github.repository }}\" },
+              \"pusher\": { \"name\": \"${{ github.actor }}\" },
+              \"head_commit\": { \"id\": \"${{ github.sha }}\", \"message\": \"${{ github.event.head_commit.message }}\" }
+            }" \
             "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
