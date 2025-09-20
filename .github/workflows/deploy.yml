@@ -15,10 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: TEST - Trigger without Cloudflare Access tokens (should fail)
+      - name: Trigger Dokploy deploy via Cloudflare Access
         run: |
-          echo "Testing webhook WITHOUT Cloudflare Access tokens - this should be blocked"
           curl -X POST \
+            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
             -d '{
@@ -37,4 +38,3 @@ jobs:
               }
             }' \
             "https://dokploy-webhook.kickroll.se/api/deploy/vWZ9VdPNI3ap2kcgLrWnW"
-          echo "If you see this, check the response above - it should show an access denied error"
