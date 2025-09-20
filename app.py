@@ -96,15 +96,33 @@ def upload_pdf():
             'summary': processor.get_summary()
         })
 
-    except Exception as e:
+    except ValueError as e:
+        # Validation error - likely not a Parkster PDF
         processing_status[session_id] = {
             'status': 'error',
-            'message': str(e)
+            'message': str(e),
+            'error_type': 'validation'
         }
         # Clean up files on error
         if os.path.exists(input_path):
             os.remove(input_path)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': str(e),
+            'error_type': 'validation'
+        }), 400
+    except Exception as e:
+        processing_status[session_id] = {
+            'status': 'error',
+            'message': str(e),
+            'error_type': 'processing'
+        }
+        # Clean up files on error
+        if os.path.exists(input_path):
+            os.remove(input_path)
+        return jsonify({
+            'error': str(e),
+            'error_type': 'processing'
+        }), 500
 
 
 @app.route('/status/<session_id>')

@@ -12,6 +12,7 @@ class ParkingReceiptProcessor:
         self.pages_data = []
         self.duplicates = {}
         self.total_amount = 0.0
+        self.is_parkster_pdf = False
 
     def extract_page_data(self, page, page_num: int) -> Optional[Dict]:
         """Extract ticket number and brutto amount from a page"""
@@ -46,24 +47,69 @@ class ParkingReceiptProcessor:
             print(f"Error extracting data from page {page_num}: {e}")
             return None
 
+    def validate_parkster_pdf(self, text: str) -> bool:
+        """Check if the PDF appears to be from Parkster"""
+        if not text:
+            return False
+
+        text_lower = text.lower()
+
+        # Look for Parkster-specific indicators
+        parkster_indicators = [
+            'parkster',
+            'biljettnummer',
+            'brutto',
+            'parkeringskvitto',
+            'parkering',
+            'kvitto'
+        ]
+
+        # Count how many indicators are present
+        indicator_count = sum(1 for indicator in parkster_indicators if indicator in text_lower)
+
+        # Check for ticket number format (9 digits)
+        has_ticket_number = extract_ticket_number(text) is not None
+
+        # Must have at least 2 indicators or have a valid ticket number with at least 1 indicator
+        return indicator_count >= 2 or (has_ticket_number and indicator_count >= 1)
+
     def process_pdf(self, input_path: str, progress_callback=None) -> Tuple[int, int, float]:
         """
         Process PDF and extract all receipt data
         Returns: (total_receipts, unique_receipts, total_amount)
+        Raises: ValueError if PDF doesn't appear to be from Parkster
         """
         self.pages_data = []
         self.duplicates = {}
+        self.is_parkster_pdf = False
+        parkster_page_count = 0
 
         with pdfplumber.open(input_path) as pdf:
             total_pages = len(pdf.pages)
+
+            if total_pages == 0:
+                raise ValueError("The PDF file is empty")
 
             for i, page in enumerate(pdf.pages):
                 if progress_callback:
                     progress_callback(i, total_pages)
 
+                # Extract text for validation
+                try:
+                    text = page.extract_text()
+                    if text and self.validate_parkster_pdf(text):
+                        parkster_page_count += 1
+                        self.is_parkster_pdf = True
+                except:
+                    pass
+
                 page_data = self.extract_page_data(page, i)
                 if page_data:
                     self.pages_data.append(page_data)
+
+        # Check if this appears to be a Parkster PDF
+        if not self.is_parkster_pdf and len(self.pages_data) == 0:
+            raise ValueError("This doesn't appear to be a Parkster parking receipt PDF. Please upload a PDF containing Parkster receipts with ticket numbers and amounts.")
 
         # Find and remove duplicates
         unique_data = []

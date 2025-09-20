@@ -56,7 +56,12 @@ processBtn.addEventListener('click', async function() {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Upload failed');
+            // Check if it's a validation error (not a Parkster PDF)
+            if (data.error_type === 'validation') {
+                throw new Error(data.error || 'This doesn\'t appear to be a Parkster parking receipt PDF. Please upload a PDF containing Parkster receipts.');
+            } else {
+                throw new Error(data.error || 'Upload failed');
+            }
         }
 
         currentSessionId = data.session_id;
@@ -137,7 +142,20 @@ function showError(message) {
     processingSection.classList.add('hidden');
     resultsSection.classList.add('hidden');
     errorSection.classList.remove('hidden');
-    errorMessage.textContent = message;
+
+    // Enhanced error message for non-Parkster PDFs
+    if (message.includes('Parkster')) {
+        errorMessage.innerHTML = `
+            <strong>Invalid PDF Format</strong><br><br>
+            ${message}<br><br>
+            <small>Parkster receipts typically contain:</small><br>
+            <small>• 9-digit ticket numbers (Biljettnummer)</small><br>
+            <small>• Amount in SEK (Brutto)</small><br>
+            <small>• Parkster branding</small>
+        `;
+    } else {
+        errorMessage.textContent = message;
+    }
 }
 
 // Download handlers
