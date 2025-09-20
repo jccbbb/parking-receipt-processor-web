@@ -12,8 +12,8 @@ jobs:
       - name: Trigger Dokploy webhook
         run: |
           curl -i -L -X POST \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            -H "${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            -H "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
             --data "{
@@ -23,3 +23,4 @@ jobs:
               \"head_commit\": { \"id\": \"${{ github.sha }}\", \"message\": \"${{ github.event.head_commit.message }}\" }
             }" \
             "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+
