@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Receipt Processor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Parking Receipt Processor</h1>
+            <p>Automatically remove duplicates and sort Parkster parking receipts</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <div id="uploadSection" class="section">
+                <div class="upload-box">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 10L12 5L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 5V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>Select PDF File</h2>
+                    <p>Choose a PDF containing Parkster parking receipts</p>
+                    <input type="file" id="fileInput" accept=".pdf" class="file-input">
+                    <label for="fileInput" class="file-label">Choose File</label>
+                    <div id="fileName" class="file-name"></div>
+                    <button id="processBtn" class="process-btn" disabled>Process PDF</button>
+                </div>
+            </div>
+
+            <!-- Processing Section -->
+            <div id="processingSection" class="section hidden">
+                <div class="processing-box">
+                    <div class="spinner"></div>
+                    <h2>Processing...</h2>
+                    <p id="processingMessage">Starting processing...</p>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="section hidden">
+                <div class="results-box">
+                    <h2>Processing Complete!</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Original Receipts:</span>
+                            <span id="totalReceipts" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Unique Receipts:</span>
+                            <span id="uniqueReceipts" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Duplicates Removed:</span>
+                            <span id="duplicatesRemoved" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item total">
+                            <span class="stat-label">Total Amount:</span>
+                            <span id="totalAmount" class="stat-value">0.00 kr</span>
+                        </div>
+                    </div>
+
+                    <div id="duplicatesList" class="duplicates-list hidden">
+                        <h3>Duplicate Tickets:</h3>
+                        <ul id="duplicatesContent"></ul>
+                    </div>
+
+                    <div class="download-buttons">
+                        <button id="downloadPdfBtn" class="download-btn primary">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 5V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Download Processed PDF
+                        </button>
+                        <button id="downloadSummaryBtn" class="download-btn secondary">
+                            Download Summary
+                        </button>
+                    </div>
+
+                    <button id="processAnotherBtn" class="process-another-btn">Process Another PDF</button>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="errorSection" class="section hidden">
+                <div class="error-box">
+                    <h2>Error</h2>
+                    <p id="errorMessage">An error occurred during processing</p>
+                    <button id="tryAgainBtn" class="try-again-btn">Try Again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
